@@ -76,15 +76,34 @@ function getRandomMeal() {
     });
 }
 
+// Fetch meals by ingredient name from API
+function getMealsByIng(ingName) {
+  resultHeading.innerHTML = `<h2>Search result for ingredient name '${ingName}':`;
+  fetch(`https://www.themealdb.com/api/json/v1/1/filter.php?i=${ingName}`)
+    .then((res) => res.json())
+    .then((data) => {
+      mealsEl.innerHTML = data.meals
+        .map(
+          (meal) => `
+            <div class="meal">
+                <img src="${meal.strMealThumb}" alt="${meal.strMeal}" />
+                <div class="meal-info" data-mealid="${meal.idMeal}">
+                    <h3>${meal.strMeal}</h3>
+                </div>  
+            </div>
+            `
+        )
+        .join("");
+    });
+}
+
 // Add meal to DOM
 function addMealToDOM(meal) {
   const ingredients = [];
 
   for (let i = 1; i <= 20; i++) {
     if (meal[`strIngredient${i}`]) {
-      ingredients.push(
-        `${meal[`strIngredient${i}`]} - ${meal[`strMeasure${i}`]}`
-      );
+      ingredients.push([meal[`strIngredient${i}`], meal[`strMeasure${i}`]]);
     } else {
       break;
     }
@@ -104,7 +123,12 @@ function addMealToDOM(meal) {
             </p>
             <h2>Ingredients</h2>
             <ul>
-                ${ingredients.map((ing) => `<li>${ing}</li>`).join("")}
+                ${ingredients
+                  .map(
+                    (ing) =>
+                      `<li data-ingname='${ing[0]}' >${ing[0]} - ${ing[1]}</li>`
+                  )
+                  .join("")}
             </ul>
         </div>
     </div>
@@ -116,7 +140,6 @@ submit.addEventListener("submit", searchMeal);
 random.addEventListener("click", getRandomMeal);
 
 mealsEl.addEventListener("click", (e) => {
-  console.clear();
   const path = e.path || (e.composedPath && e.composedPath());
   const mealInfo = path.find((item) => {
     if (item.classList) {
@@ -130,6 +153,14 @@ mealsEl.addEventListener("click", (e) => {
 
     getMealById(mealId);
   }
+});
+
+single_mealEl.addEventListener("click", (e) => {
+  if (e.target.nodeName !== "LI") return;
+
+  const ingName = e.target.getAttribute("data-ingName");
+
+  getMealsByIng(ingName);
 });
 
 getRandomMeal();
